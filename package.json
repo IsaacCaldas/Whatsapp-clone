@@ -1,0 +1,19 @@
+{
+  "name": "whatsapp-clone",
+  "version": "1.0.0",
+  "description": "[![Hcode Treinamentos](https://www.hcode.com.br/res/img/hcode-200x100.png)](https://www.hcode.com.br)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IsaacCaldas/Whatsapp-clone.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/IsaacCaldas/Whatsapp-clone/issues"
+  },
+  "homepage": "https://github.com/IsaacCaldas/Whatsapp-clone#readme"
+}

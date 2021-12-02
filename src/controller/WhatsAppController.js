@@ -68,7 +68,9 @@ class WhatsAppController {
     this.el.myPhoto.on('click', e=>{
       this.closeAllLeftPanel();
       this.el.panelEditProfile.show();
-      this.el.panelEditProfile.addClass('open');
+      setTimeout(()=>{
+        this.el.panelEditProfile.addClass('open');
+      }, 100);
     });
     this.el.btnClosePanelEditProfile.on('click', e=>{
       this.el.panelEditProfile.removeClass('open');
@@ -76,8 +78,14 @@ class WhatsAppController {
     
     this.el.btnNewContact.on('click', e=>{
       this.closeAllLeftPanel();
-      this.panelAddContact.show();
-      this.el.panelAddContact.addClass('open');
+      this.el.panelAddContact.show();
+      setTimeout(()=>{
+        this.el.panelAddContact.addClass('open');
+      }, 100);
+    });
+    this.el.btnClosePanelAddContact.on('click', e =>{
+      this.el.panelAddContact.
+      removeClass('open');
     });
   }
 
