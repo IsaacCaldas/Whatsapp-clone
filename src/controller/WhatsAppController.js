@@ -1,5 +1,6 @@
 import {Format} from './../util/Format';
 import {CameraController} from './CameraController';
+import {MicrophoneController} from './MicrophoneController';
 import {DocumentPreviewController} from './DocumentPreviewController';
 
 export class WhatsAppController {
@@ -195,18 +196,32 @@ export class WhatsAppController {
     this.el.inputDocument.on('change', e =>{
       
       if (this.el.inputDocument.files.length){
+
+        this.el.imgPanelDocumentPreview.css({
+          'height': 'calc(100% - 80px)'
+        });
+
         let file = this.el.inputDocument.files[0];
 
         this._documentPreviewController = new DocumentPreviewController(file);
         
         this._documentPreviewController.getPreviewData().then(result =>{
+         
           this.el.imgPanelDocumentPreview.src = result.src;
           this.el.infoPanelDocumentPreview.innerHTML = result.info;
           this.el.imagePanelDocumentPreview.show();
           this.el.filePanelDocumentPreview.hide();
 
+          this.el.panelDocumentPreview.css({
+            'height':'105%'
+          });
+
         }).catch(err =>{
 
+          this.el.panelDocumentPreview.css({
+            'height':'105%'
+          });
+          
           switch (file.type){
             
             case 'application/vnd.ms-excel':
