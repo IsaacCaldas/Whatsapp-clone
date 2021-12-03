@@ -266,14 +266,19 @@ export class WhatsAppController {
     });
 
     this.el.btnSendMicrophone.on('click', e =>{
+
       this.el.btnSendMicrophone.hide();
       this.el.recordMicrophone.show();
       this.startRecordMicrophoneTime();
+
+      this._microphoneController = new MicrophoneController();
     });
     this.el.btnCancelMicrophone.on('click', e =>{
+      this._microphoneController.stop();
       this.closeRecordMicrophone();
     });
     this.el.btnFinishMicrophone.on('click', e =>{
+      this._microphoneController.stop();
       this.closeRecordMicrophone();
       console.log('Áudio enviado.');
     });
