@@ -1,5 +1,5 @@
 const firebase = require('firebase');
-//require('firebase/firestore');
+require('firebase/firestore');
 
 export class Firebase {
 
@@ -17,14 +17,14 @@ export class Firebase {
   }
 
   init(){
-    if (!this._initialized){
+    if (!window._initializedFirebase){
       firebase.initializeApp(this._config);
 
       firebase.firestore().settings({
         timestampsInSnapshots: true 
       });
 
-      this._initialized = true;
+      window._initializedFirebase = true;
     }
   }
 
@@ -34,5 +34,24 @@ export class Firebase {
 
   static hd(){
     return firebase.storage();
+  }
+
+  initAuth(){
+    return new Promise((resolve, reject)=>{
+      
+      let provider = new firebase.auth.GoogleAuthProvider();
+
+      firebase.auth().signInWithPopup(provider).then(result => {
+        let token = result.credential.accessToken;
+        let user = result.user;
+
+        resolve({
+          user, 
+          token
+        });
+      }).catch(err =>{
+        reject(err);
+      });
+    })
   }
 }
