@@ -2,6 +2,7 @@ import {Format} from './../util/Format';
 import {CameraController} from './CameraController';
 import {MicrophoneController} from './MicrophoneController';
 import {DocumentPreviewController} from './DocumentPreviewController';
+import {Firebase} from './../util/Firebase';
 
 export class WhatsAppController {
 
@@ -11,6 +12,17 @@ export class WhatsAppController {
     this.loadElements();
 
     this.initEvents();
+
+    this.initAuth();
+    this._firebase = new Firebase();
+   }
+
+   initAuth(){
+     this._firebase.initAuth().then({
+
+     }).catch(err =>{
+      console.error(err);
+     });
    }
 
   loadElements(){
@@ -269,20 +281,26 @@ export class WhatsAppController {
 
       this.el.btnSendMicrophone.hide();
       this.el.recordMicrophone.show();
-      this.startRecordMicrophoneTime();
 
       this._microphoneController = new MicrophoneController();
 
-      this._microphoneController.on('play', audio =>{
-        console.log('recebi o evento Play', audio);
+      this._microphoneController.on('ready', audio =>{
+
+        console.log('ready event');
+        this._microphoneController.startRecorder();
+      });
+
+      this._microphoneController.on('recordtimer', timer =>{
+        this.el.recordMicrophoneTimer.innerHTML = Format.toTime(timer);
       });
     });
+
     this.el.btnCancelMicrophone.on('click', e =>{
-      this._microphoneController.stop();
+      this._microphoneController.stopRecorder();
       this.closeRecordMicrophone();
     });
     this.el.btnFinishMicrophone.on('click', e =>{
-      this._microphoneController.stop();
+      this._microphoneController.stopRecorder();
       this.closeRecordMicrophone();
       console.log('Áudio enviado.');
     });
@@ -351,14 +369,6 @@ export class WhatsAppController {
   closeRecordMicrophone(){
     this.el.btnSendMicrophone.show();
     this.el.recordMicrophone.hide();
-    clearInterval(this._recordMicrophoneInterval);
-  }
-  startRecordMicrophoneTime(){
-    let start = Date.now();
-    this._recordMicrophoneInterval = setInterval(()=>{
-
-      this.el.recordMicrophoneTimer.innerHTML = Format.toTime(Date.now() - start);
-    },100)
   }
 
   closeAllMainPanel(){
