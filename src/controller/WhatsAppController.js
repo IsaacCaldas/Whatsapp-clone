@@ -4,6 +4,7 @@ import {MicrophoneController} from './MicrophoneController';
 import {DocumentPreviewController} from './DocumentPreviewController';
 import { Firebase } from './../util/Firebase';
 import { User } from './../model/User';
+import { info } from 'pdfjs-dist';
 
 export class WhatsAppController {
 
@@ -147,7 +148,6 @@ export class WhatsAppController {
 
       this._user.save().then(()=>{
         this.el.btnSavePanelEditProfile.disabled = false;
-
       });
     });
 
@@ -166,6 +166,19 @@ export class WhatsAppController {
       e.preventDefault();
 
       let formData = new FormData(this.el.formPanelAddContact);
+
+      let contact = new User(formData.get('email'));
+
+      contact.on('datachange', data => {
+        if (data.name){
+          this._user.addContact(contact).then(()=>{
+            this.el.btnClosePanelAddContact.click();
+            console.info('Novo contato adicionado.');
+          });
+        } else {
+          console.error('Usuário não encontrado.');
+        }
+      });
     });
 
     this.el.contactsMessagesList.querySelectorAll('.contact-item').forEach(item =>{
