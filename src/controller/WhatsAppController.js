@@ -175,14 +175,21 @@ export class WhatsAppController {
         let message = new Message();
         message.fromJSON(data);
 
-        if(!this.el.panelMessagesContainer.querySelector('#_' + data.id)){
+        let me = (data.from === this._user.email);
 
-          let me = (data.from === this._user.email);
+        if(!this.el.panelMessagesContainer.querySelector('#_' + data.id)){
+          if (!me){
+            doc.ref.set({
+              status:'read'
+            }, {
+              merge: true
+            });
+          }
 
           let view = message.getViewElement(me);
         
           this.el.panelMessagesContainer.appendChild(view);
-        } else {
+        } else if (me){
           let msgEl = this.el.panelMessagesContainer.querySelector('#_' + data.id)
 
           msgEl.querySelector('.message-status').innerHTML = message.getStatusViewElement().outerHTML;
@@ -365,6 +372,7 @@ export class WhatsAppController {
     this.el.inputPhoto.on('change', e =>{
       [...this.el.inputPhoto.files].forEach(file =>{
 
+        Message.sendImage(this._contactActive.chatId, this._user.email, file);
       });
     });
 
