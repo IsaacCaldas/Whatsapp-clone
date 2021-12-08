@@ -9,6 +9,17 @@ export class Format {
     return Object.keys(div.firstChild.dataset)[0];
   }
 
+  static dateToTime(date, locale = 'pt-BR'){
+    return date.toLocaleTimeString(locale, {
+      hours: '2-digit',
+      minutes: '2-digit'
+    });
+  }
+
+  static timeStampToTime(timeStamp){
+    return (timeStamp && typeof timeStamp.toDate === 'function') ? Format.dateToTime(timeStamp.toDate()) : '';
+  }
+
   static toTime(duration) {
     let seconds = parseInt((duration / 1000) % 60);
     let minutes = parseInt((duration / (1000 * 60)) % 60);
