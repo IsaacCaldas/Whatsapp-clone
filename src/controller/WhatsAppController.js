@@ -179,7 +179,9 @@ export class WhatsAppController {
         message.fromJSON(data);
 
         let me = (data.from === this._user.email);
-
+      
+        let view = message.getViewElement(me);
+        
         if(!this.el.panelMessagesContainer.querySelector('#_' + data.id)){
           if (!me){
             doc.ref.set({
@@ -188,15 +190,14 @@ export class WhatsAppController {
               merge: true
             });
           }
-
-          let view = message.getViewElement(me);
         
           this.el.panelMessagesContainer.appendChild(view);
         } else {
 
-          let view = message.getViewElement(me);
+          let parent = this.el.panelMessagesContainer.querySelector('#_' + data.id).parentNode;
 
-          this.el.panelMessagesContainer.querySelector('#_' + data.id).innerHTML = view.innerHTML;
+          parent.replaceChild(view, this.el.panelMessagesContainer.querySelector('#_' + data.id));
+          
         }
         
         if (this.el.panelMessagesContainer.querySelector('#_' + data.id) && me){
@@ -204,6 +205,30 @@ export class WhatsAppController {
 
           msgEl.querySelector('.message-status').innerHTML = message.getStatusViewElement().outerHTML;
         }  
+
+        if (message.type === 'contact'){
+          view.querySelector('.btn-message-send').on('click', e => {
+
+            Chat.createIfNotExists(this._user.email,message.content.email).then(chat =>{
+
+              let contact = new User(message.content.email);
+
+              contact.on('datachange', data => {
+
+                contact.chatId = chat.id;
+
+                this._user.addContact(contact);
+
+                this._user.chatId = chat.id;
+    
+                contact.addContact(this._user);
+
+                this.setActiveChat(contact);
+              });
+
+            });
+          });
+        }
       });
 
       if (autoScroll){
@@ -355,6 +380,7 @@ export class WhatsAppController {
               console.info('Novo contato adicionado.');
             });
           });
+
         } else {
           console.error('Usuário não encontrado.');
         }
