@@ -1,8 +1,6 @@
 import { Firebase } from '../util/Firebase';
 import { Model } from './Model';
 import { Format } from '../util/Format';
-import { Chat } from './Chat';
-import { Metadata } from 'pdfjs-dist';
 import { Upload } from '../util/Upload';
 
 export class Message extends Model {
@@ -147,6 +145,7 @@ export class Message extends Model {
       Message.upload(file, from).then(snapshot=>{
 
         let downloadFile = '';
+        
         snapshot.ref.getDownloadURL().then(downloadURL=>{
             downloadFile = downloadURL;
       });

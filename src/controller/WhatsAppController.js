@@ -14,13 +14,66 @@ import { Upload } from '../util/Upload';
 export class WhatsAppController {
 
   constructor(){
+
+    this._active = true;
+
     this._firebase = new Firebase(); 
     this.initAuth()
 
     this.elementsPrototype();
     this.loadElements();
     this.initEvents();
-   }
+    this.checkNotifications();
+    
+  }
+
+  checkNotifications(){
+
+    if (typeof Notification === 'function'){
+
+      if (Notification.permission !== 'granted'){
+
+        this.el.alertNotificationPermission.show();
+      } else {
+
+        this.el.alertNotificationPermission.hide();
+      }
+
+      this.el.alertNotificationPermission.on('click', e =>{
+
+        Notification.requestPermission(permission => {
+          
+          if (permission === 'granted'){
+
+            this.el.alertNotificationPermission.hide();
+            console.info('Notificações permitidas');
+          }
+        });
+      });
+    } 
+  } 
+
+  notification(data){
+
+    if (Notification.permission === 'granted' && !this._active){
+
+      let news = new Notification(this._contactActive.name, {
+        icon: this._contactActive.photo,
+        body: data.content
+      });
+
+      let sound = new Audio('./audio/alert.mp3');
+      sound.currentTime = 0;
+      sound.play();
+
+      setTimeout(()=>{
+        
+        if (news){
+          news.close();
+        }
+      }, 3000);
+    }
+  }
 
   initAuth(){
     this._firebase.initAuth().then(response =>{
@@ -94,7 +147,7 @@ export class WhatsAppController {
                       <span dir="auto" title="${contact.name}" class="_1wjpf">${contact.name}</span>
                         </div>
                           <div class="_3Bxar">
-                            <span class="_3T2VG">${contact.lastMessageTime}</span>
+                            <span class="_3T2VG">${Format.timeStampToTime(contact.lastMessageTime)}</span>
                           </div>
                         </div>
                         <div class="_1AwDx">
@@ -164,6 +217,8 @@ export class WhatsAppController {
 
     this.el.panelMessagesContainer.innerHTML = '';
 
+    this._messagesReceived = [];
+
     Message.getRef(this._contactActive.chatId).orderBy('timeStamp').onSnapshot(docs =>{
 
       let scrollTop = this.el.panelMessagesContainer.scrollTop;
@@ -177,9 +232,18 @@ export class WhatsAppController {
         data.id = doc.id;
 
         let message = new Message();
+
         message.fromJSON(data);
 
         let me = (data.from === this._user.email);
+
+        if (!me && this._messagesReceived.filter(id =>{
+          return (id === data.id)
+        }).length === 0){
+
+          this.notification(data);
+          this._messagesReceived.push(data.id);
+        }
       
         let view = message.getViewElement(me);
         
@@ -309,6 +373,15 @@ export class WhatsAppController {
 
   initEvents(){
 
+    window.addEventListener('focus', e =>{
+      
+      this._active = true;
+    })
+
+    window.addEventListener('blur', e =>{
+      this._active = false;
+    })
+
     this.el.inputSearchContacts.on('keyup', e =>{
       if(this.el.inputSearchContacts.value.length > 0 ){
         this.el.inputSearchContactsPlaceholder.hide();
@@ -343,7 +416,7 @@ export class WhatsAppController {
           snapshot.ref.getDownloadURL().then(downloadURL=>{
 						
             this._user.photo = downloadURL.toString();
-            
+
 						this._user.save().then(()=>{
 							this.el.btnClosePanelEditProfile.click();
 						});
@@ -529,7 +602,7 @@ export class WhatsAppController {
       if (this.el.inputDocument.files.length){
 
         this.el.imgPanelDocumentPreview.css({
-          'height': 'calc(100% - 80px)'
+          'height': 'calc(85% - 80px)'
         });
 
         let file = this.el.inputDocument.files[0];
@@ -587,16 +660,19 @@ export class WhatsAppController {
     });
     this.el.btnSendDocument.on('click', e =>{
       
-      let file = this.el.inputDocument.files;
-      let base64 = this.el.imgPanelDocumentPreview.src;
+      let file = this.el.inputDocument.files[0];
+			let base64 = this.el.imgPanelDocumentPreview.src;
 
-      if (file.type === 'application/pdf'){
+			if(file.type === 'application/pdf'){  
 
         Base64.toFile(base64).then(filePreview =>{   
-         Message.sendDocument(this._contactActive.chatId, 
-            this._user.email, 
-            file, filePreview, 
-            this.el.infoPanelDocumentPreview.innerHTML);
+         Message.sendDocument(
+          this._contactActive.chatId, 
+          this._user.email, 
+          file, 
+          filePreview,
+          this.el.infoPanelDocumentPreview.innerHTML
+          );
         });
       } else {
         Message.sendDocument(this._contactActive.chatId, 

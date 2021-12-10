@@ -3,80 +3,87 @@ const path = require('path');
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = path.resolve(__dirname, '../../dist/pdf.worker.bundle.js');
 
-export class DocumentPreviewController{
+export class DocumentPreviewController
+{
+	constructor(file)
+	{
+		this._file = file;
+	}
 
-  constructor(file){
+	getPreviewData()
+	{
+		return new Promise((s, f)=>{
 
-    this._file = file;
-  }
+			let reader = new FileReader();
 
-  getPreviewData(){
-    return new Promise((resolve, reject)=>{
+			switch(this._file.type)
+			{
+				case 'image/png':
+				case 'image/jpg':
+				case 'image/jpeg':
+				case 'image/gif':
 
-      let reader = new FileReader();
+					reader.onload = e=>{
+						s({
+							src: reader.result,
+							info: this._file.name
+						});
+					};
 
-      switch (this._file.type){
+					reader.onerror = e=>{
+						f(e);
+					};
 
-        case 'image/png':
-        case 'image/jpeg':
-        case 'image/jpg':
-        case 'image/gif':
+					reader.readAsDataURL(this._file);
+			  	break;
 
-          reader.onload = e =>{
-            resolve({
-              src: reader.result,
-              info:this._file.name
-            });
-          }
-          reader.onerror = e => {
-            reject(e);
-          }
-          reader.readAsDataURL(this._file);
-          break;
+				case 'application/pdf':
 
-          case 'application/pdf':
+					reader.onload = e=>{
 
-            reader.onload = e =>{
+						pdfjsLib.getDocument(new Uint8Array(reader.result)).then(pdf=>{
 
-                 pdfjsLib.getDocument(new Uint8Array(reader.result)).then(pdf =>{
-                  pdf.getPage(1).then(page =>{
-                    let viewport = page.getViewport(1);
+							pdf.getPage(1).then(page=>{
 
-                    let canvas = document.createElement('canvas');
-                    let canvasContext = canvas.getContext('2d');
-                    
-                    canvas.width = viewport;
-                    canvas.height = viewport; 
-                    
-                    page.render({
-                      canvasContext,
-                      viewport
-                    }).then(()=>{
-                      let s = (pdf.numPages > 1) ? 's' : '';
-                      resolve({
-                        src: canvas.toDataURL('image/png'),
-                        info:  `${pdf.numPages} página${s}.` 
-                      });
+								let viewport = page.getViewport(1);
 
-                    }).catch(err =>{
-                      reject(err);
-                    });
+								let canvas = document.createElement('canvas');
+								let canvasContext = canvas.getContext('2d');
 
-                  }).catch(err =>{
-                    reject(err);
-                  });
-                 })          .catch(err =>{
-                  reject(err);
-                 }); 
-            }
+								canvas.setAttribute('height', viewport.height);
+								canvas.setAttribute('width', viewport.width);
 
-            reader.readAsArrayBuffer(this._file);
+								page.render({
+									canvasContext,
+									viewport
+								}).then(()=>{
 
-            break;
+									let _s = (pdf.numPages > 1) ? 's' : '';
 
-          default:
-            reject();
-      }
-    });
-  }
+									s({
+										src: canvas.toDataURL('image/png'),
+										info: `${pdf.numPages} página${_s}`
+									});
+
+								}).catch(err=>{
+									f(err);
+								});
+								
+							}).catch(err=>{
+								f(err);
+							});
+
+						}).catch(err=>{
+							f(err);
+						});
+					}
+
+					reader.readAsArrayBuffer(this._file);
+				break;
+
+				default:
+					f();
+			}
+		});
+	}
 }
