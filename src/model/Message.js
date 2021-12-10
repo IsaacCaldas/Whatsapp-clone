@@ -142,7 +142,7 @@ export class Message extends Model {
               content: downloadURL,
               size: file.size,
               fileType: file.type,
-              status: 'sent',
+              status: 'send',
               photo,
               duration: metadata.duration
           }, {
@@ -155,65 +155,66 @@ export class Message extends Model {
 
   static sendDocument(chatId, from, file, filePreview, info) {
 
-		Message.send(chatId, from, 'document', '').then(msgRef => {
+    Message.send(chatId, from, 'document').then(msgRef=>{
 
-			if (filePreview) {
+      Message.upload(file, from).then(snapshot=>{
 
-				Message.upload(file, from).then(downloadURL=> {
-	
-					let downloadFile = downloadURL;
-	
-						Message.upload(filePreview, from).then(downloadURL2=> {
-	
-						let downloadPreview = downloadURL2;
+        let downloadFile = '';
+        snapshot.ref.getDownloadURL().then(downloadURL=>{
+            downloadFile = downloadURL;
+      });
 
-						msgRef.set({
-							content: downloadFile,
-							preview: downloadPreview,
-							filename: file.name,
-							size: file.size,
-							fileType: file.type,
-							status: 'send',
-							info
-						}, {
-							merge: true
-						});
-					});
-				});
-			} else {
+      if(filePreview) {
+        Message.upload(filePreview, from).then(snapshotPreview=>{
 
-				msgRef.set({
-					content: downloadFile,
-					filename: file.name,
-					size: file.size,
-					fileType: file.type,
-					status: 'send'
-				}, {
-					merge: true
-				});
-			}
-		});
-	}
+          let downloadPreview = '';
+          snapshotPreview.ref.getDownloadURL().then(downloadURL=>{
+            downloadPreview = downloadURL;
+          });
 
-  static sendImage(chatId, from, file) {
+            msgRef.set({
+              content: downloadFile,
+              preview: downloadPreview,
+              filename: file.name,
+              size: file.size,
+              fileType: file.type,
+              status: 'send',
+              info
+            }, {
+              merge: true
+            });
+          });
+        } else {
 
-		return new Promise((s, f) => {
+          msgRef.set({
+            content: downloadFile,
+            filename: file.name,
+            size: file.size,
+            fileType: file.type,
+            status: 'send'
+        }, {
+            merge: true
+          });
+        }
+      });
+    });  
+  }
 
-			Message.upload(file, from).then(downloadURL=> {
+  static sendImage(chatId, from, file){
 
-				Message.send(
-					chatId,
-					from,
-					'image',
-					downloadURL
-				).then(()=> {
-					s();
-				});
-			});
-		});
-	}
+    return new Promise((s,f)=>{
 
-  static send(chatId, from, type, content) {
+      Message.upload(file, from).then(snapshot=>{
+        snapshot.ref.getDownloadURL().then(downloadURL=>{
+          Message.send(chatId, from, 'image', downloadURL).then(()=>{
+              s();
+          });
+        });
+      });
+    });  
+  }
+
+  static send(chatId, from, type, content = '') {
 
 		return new Promise((s, f) => {
 
@@ -228,7 +229,7 @@ export class Message extends Model {
 				let docRef = result.parent.doc(result.id);
         
 				docRef.set({
-					status: 'sent'
+					status: 'send'
 				}, {
 					merge: true
 				}).then(()=> {
