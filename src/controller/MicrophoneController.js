@@ -6,8 +6,8 @@ export class MicrophoneController extends ClassEvent{
 
     super();
 
-    this._mimeType = 'audio/webm';  
     this._available = false;
+		this._mimetype = 'audio/webm';
 
     navigator.mediaDevices.getUserMedia({
       audio: true
@@ -38,6 +38,9 @@ export class MicrophoneController extends ClassEvent{
         mimeType: this._mimeType
       });
 
+      this.startTimer();
+
+      //O MediaRecorder envia pedaços do audio
       this._recordedChunks = [];
       this._mediaRecorder.addEventListener('dataavailable', e => {
         if(e.data.size > 0)
@@ -46,6 +49,7 @@ export class MicrophoneController extends ClassEvent{
         }
       });
 
+      //Quando encerrar a gravação
       this._mediaRecorder.addEventListener('stop', e =>{
         let blob = new Blob(this._recordedChunks, {
           type: this._mimeType
@@ -53,27 +57,35 @@ export class MicrophoneController extends ClassEvent{
 
         let filename = `rec${Date.now()}.webm`;
 
-        let file = new File([blob], filename, {
-          type: this._mimeType,
-          lastModified: Date.now()
-        });
-        console.log('file', file); 
+        let audioContext = new AudioContext();
 
-        /*let reader = new FileReader();
+        let reader = new FileReader();
 
         reader.onload = e => {
-          console.log('reader file', file); 
+          
+          audioContext.decodeAudioData(reader.result).then(decode => {
+            
+            let file = new File([blob], filename, {
+              type: this._mimeType,
+              lastModified: Date.now()
+            });
 
-          let audio = new Audio(reader.result);
-
-          audio.play();
+            this.trigger('recorded', file, decode);
+          });
         }
 
+        reader.readAsArrayBuffer(blob);
+
+        /*let reader = new FileReader();
+        reader.onload = e => {
+          console.log('reader file', file); 
+          let audio = new Audio(reader.result);
+          audio.play();
+        }
         reader.readAsDataURL(file);*/
       });
 
       this._mediaRecorder.start();
-      this.startTimer();
     }
   }
   stopRecorder(){

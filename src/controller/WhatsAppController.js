@@ -609,8 +609,6 @@ export class WhatsAppController {
       this._microphoneController = new MicrophoneController();
 
       this._microphoneController.on('ready', audio =>{
-
-        console.log('ready event');
         this._microphoneController.startRecorder();
       });
 
@@ -621,12 +619,23 @@ export class WhatsAppController {
 
     this.el.btnCancelMicrophone.on('click', e =>{
       this._microphoneController.stopRecorder();
+      this.el.recordMicrophoneTimer.innerHTML = Format.toTime(0);
       this.closeRecordMicrophone();
     });
     this.el.btnFinishMicrophone.on('click', e =>{
+
+      this._microphoneController.on('recorded', (file, metadata) =>{
+
+        Message.sendAudio(
+          this._contactActive.chatId,
+          this._user.email,
+          file, metadata,
+          this._user.photo
+          );
+      }); 
+
       this._microphoneController.stopRecorder();
       this.closeRecordMicrophone();
-      console.log('Áudio enviado.');
     });
 
     this.el.inputText.on('keyup', e =>{
