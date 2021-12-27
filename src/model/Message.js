@@ -140,23 +140,24 @@ export class Message extends Model {
 
   static sendDocument(chatId, from, file, filePreview, info) {
 
+    console.log(file.type);
+
     Message.send(chatId, from, 'document').then(msgRef=>{
 
       Message.upload(file, from).then(snapshot=>{
 
         let downloadFile = '';
-        
+
         snapshot.ref.getDownloadURL().then(downloadURL=>{
             downloadFile = downloadURL;
       });
-
-      if(filePreview) {
+      
+      if(file.type == 'application/pdf') {
         Message.upload(filePreview, from).then(snapshotPreview=>{
 
           let downloadPreview = '';
           snapshotPreview.ref.getDownloadURL().then(downloadURL=>{
             downloadPreview = downloadURL;
-          });
 
             msgRef.set({
               content: downloadFile,
@@ -170,7 +171,8 @@ export class Message extends Model {
               merge: true
             });
           });
-        } else {
+        });
+      } else {
 
           msgRef.set({
             content: downloadFile,

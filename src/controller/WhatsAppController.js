@@ -597,6 +597,7 @@ export class WhatsAppController {
       });
       this.el.inputDocument.click();
     });
+    
     this.el.inputDocument.on('change', e =>{
       
       if (this.el.inputDocument.files.length){
